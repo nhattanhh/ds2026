@@ -5,4 +5,4 @@ Student Info
 
 * Student Name: Vu Nhat Anh
 * Student ID: 22BA13036
-* Student Group ID: Not yet
+* Student Group ID: 15
