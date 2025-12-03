@@ -1,0 +1,96 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{Practical Work 1: TCP File Transfer}
+\author{Vu Nhat Anh - 22BA13036}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Protocol Design}
+The protocol used for this file transfer is a simple TCP stream protocol.
+\begin{itemize}
+    \item \textbf{Transport Layer}: TCP is used to ensure reliable, ordered delivery of the data stream.
+    \item \textbf{Connection}: The client initiates a connection to the server's IP and Port (8080).
+    \item \textbf{Data Transfer}: 
+    \begin{itemize}
+        \item The client reads the file and sends raw bytes over the socket.
+        \item The server receives the bytes and writes them directly to a file.
+        \item The transfer ends when the client closes the connection (EOF detected by the server).
+    \end{itemize}
+\end{itemize}
+
+\section{System Organization}
+The system consists of two main components:
+\begin{itemize}
+    \item \textbf{Server}: Listens for incoming TCP connections. When a client connects, it accepts the connection, reads the data stream until the connection is closed, and saves the data to a file.
+    \item \textbf{Client}: Connects to the server, reads a local file, and sends its content over the TCP connection.
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{system_diagram.png} 
+    % Note: Diagram would be included here.
+    \caption{Client-Server Architecture}
+\end{figure}
+
+\section{Implementation}
+
+\subsection{Server Implementation}
+The server uses the `socket` module to bind to a port and listen.
+\begin{lstlisting}
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    conn, addr = s.accept()
+    with conn:
+        with open('received_file.txt', 'wb') as f:
+            while True:
+                data = conn.recv(1024)
+                if not data: break
+                f.write(data)
+\end{lstlisting}
+
+\subsection{Client Implementation}
+The client connects to the server and sends the file data.
+\begin{lstlisting}
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    with open(filename, 'rb') as f:
+        while True:
+            data = f.read(1024)
+            if not data: break
+            s.sendall(data)
+\end{lstlisting}
+
+\section{Roles}
+\begin{itemize}
+    \item \textbf{Vu Nhat Anh}: Implemented both the Server and Client logic and wrote this report.
+\end{itemize}
+
+\end{document}
