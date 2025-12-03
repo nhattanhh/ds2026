@@ -1,0 +1,91 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{Practical Work 2: RPC File Transfer}
+\author{Vu Nhat Anh - 22BA13036}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{RPC Design}
+The system uses the XML-RPC protocol to enable remote procedure calls.
+\begin{itemize}
+    \item \textbf{Service}: The server exposes a single method `save_file`.
+    \item \textbf{Method Signature}: `save_file(filename, data)`
+    \begin{itemize}
+        \item `filename`: String, the name of the file to be saved on the server.
+        \item `data`: Binary, the content of the file. In Python's `xmlrpc`, this is handled using the `xmlrpc.client.Binary` wrapper to ensure binary data is correctly encoded (e.g., base64) for transport over XML.
+    \end{itemize}
+    \item \textbf{Return Value}: Boolean, `True` if successful, `False` otherwise.
+\end{itemize}
+
+\section{System Organization}
+The system follows a standard RPC Client-Server architecture:
+\begin{itemize}
+    \item \textbf{RPC Server}: Registers the `save_file` function and listens for XML-RPC requests on port 8080. It handles the unmarshalling of parameters and execution of the local function.
+    \item \textbf{RPC Client}: Creates a proxy to the server and calls `proxy.save_file()`. It handles reading the local file and marshalling it into the XML-RPC format.
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{rpc_diagram.png} 
+    % Note: Diagram would be included here.
+    \caption{RPC Architecture}
+\end{figure}
+
+\section{Implementation}
+
+\subsection{Server Implementation}
+The server uses `SimpleXMLRPCServer` to expose the function.
+\begin{lstlisting}
+def save_file(filename, data):
+    with open(filename, 'wb') as f:
+        f.write(data.data)
+    return True
+
+with SimpleXMLRPCServer((HOST, PORT)) as server:
+    server.register_function(save_file, 'save_file')
+    server.serve_forever()
+\end{lstlisting}
+
+\subsection{Client Implementation}
+The client uses `ServerProxy` to call the remote method.
+\begin{lstlisting}
+proxy = xmlrpc.client.ServerProxy(f'http://{HOST}:{PORT}')
+with open(filename, 'rb') as f:
+    file_content = f.read()
+    # Wrap in Binary for XML-RPC
+    proxy.save_file(filename, xmlrpc.client.Binary(file_content))
+\end{lstlisting}
+
+\section{Roles}
+\begin{itemize}
+    \item \textbf{Vu Nhat Anh}: Implemented both the RPC Server and Client logic and wrote this report.
+\end{itemize}
+
+\end{document}
