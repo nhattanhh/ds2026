@@ -25,29 +25,18 @@ def main():
         with open(filename, 'rb') as f:
             file_content = f.read()
             
-        # Send file name and content
-        # Tag 0: Filename
-        # Tag 1: Content
         comm.send(filename, dest=1, tag=0)
         comm.send(file_content, dest=1, tag=1)
         print("Rank 0: File sent successfully.")
         
     elif rank == 1:
-        # Receiver / Server
         print("Rank 1: Waiting for file...")
-        
-        # Receive file name
         filename = comm.recv(source=0, tag=0)
-        # Receive content
         file_content = comm.recv(source=0, tag=1)
-        
         print(f"Rank 1: Received file '{filename}'. Saving...")
-        
-        # Save to file (prefixing to avoid overwriting original if in same dir)
         save_name = "received_" + filename
         with open(save_name, 'wb') as f:
             f.write(file_content)
-            
         print(f"Rank 1: File saved as '{save_name}'.")
 
 if __name__ == "__main__":
