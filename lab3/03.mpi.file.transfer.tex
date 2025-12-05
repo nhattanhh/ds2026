@@ -33,39 +33,35 @@
 \maketitle
 
 \section{Choice of MPI Implementation}
-I chose \textbf{mpi4py} (MPI for Python) for this implementation.
+This implementation uses \textbf{mpi4py}, a Python binding for the MPI standard. The choice was made for the following reasons:
 \begin{itemize}
-    \item \textbf{Ease of Use}: It provides a Pythonic interface to standard MPI functions, making it easier to implement and debug compared to C/C++.
-    \item \textbf{Integration}: It integrates well with Python's object serialization (pickle), allowing easy transfer of complex data types if needed, though we use binary transfer here.
-    \item \textbf{Standard Compliance}: It wraps standard MPI implementations (like MS-MPI on Windows or OpenMPI on Linux), ensuring the concepts learned are transferable.
+    \item It provides a clean, Pythonic interface to standard MPI operations.
+    \item It supports automatic serialization of Python objects, simplifying data transfer.
+    \item The concepts and APIs align with MPI implementations in C/C++, making the knowledge transferable.
 \end{itemize}
 
 \section{MPI Design}
-The system uses the SPMD (Single Program, Multiple Data) model, where the same code runs on all processes but executes different logic based on the process rank.
+MPI follows the SPMD (Single Program, Multiple Data) model, where the same program runs on multiple processes, each identified by a unique rank. The behavior of each process is determined by its rank value.
+
+For file transfer, we use point-to-point communication:
 \begin{itemize}
-    \item \textbf{Rank 0 (Sender)}: Reads the file and sends it.
-    \item \textbf{Rank 1 (Receiver)}: Receives the file and saves it.
-    \item \textbf{Communication}: Point-to-point communication using `comm.send()` and `comm.recv()`.
+    \item \textbf{Rank 0}: Acts as the sender. Reads the file and transmits it to Rank 1.
+    \item \textbf{Rank 1}: Acts as the receiver. Waits for the file data and saves it locally.
 \end{itemize}
+
+Messages are distinguished using tags: tag 0 for the filename, tag 1 for the file content.
 
 \section{System Organization}
+The system requires exactly two MPI processes. Both processes execute the same code, but their behavior differs based on rank:
 \begin{itemize}
-    \item \textbf{Process 0}: Acts as the Client/Sender.
-    \item \textbf{Process 1}: Acts as the Server/Receiver.
-    \item \textbf{Message Tag 0}: Used for sending the filename.
-    \item \textbf{Message Tag 1}: Used for sending the file content.
+    \item Process 0 initiates the transfer by calling \texttt{comm.send()}.
+    \item Process 1 waits for incoming data using \texttt{comm.recv()}.
 \end{itemize}
 
-\begin{figure}[h!]
-    \centering
-    % \includegraphics[width=0.8\textwidth]{mpi_diagram.png} 
-    % Note: Diagram would be included here.
-    \caption{MPI Communication Flow}
-\end{figure}
+The program is executed using: \texttt{mpiexec -n 2 python transfer.py <filename>}
 
 \section{Implementation}
-The implementation uses `MPI.COMM_WORLD` to communicate between processes.
-
+The implementation uses \texttt{MPI.COMM\_WORLD} for communication between processes:
 \begin{lstlisting}
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -84,10 +80,5 @@ elif rank == 1:
     with open('received_' + filename, 'wb') as f:
         f.write(content)
 \end{lstlisting}
-
-\section{Roles}
-\begin{itemize}
-    \item \textbf{Vu Nhat Anh}: Implemented the MPI logic using mpi4py and wrote this report.
-\end{itemize}
 
 \end{document}
